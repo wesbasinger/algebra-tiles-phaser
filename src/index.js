@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 import bgImg from './assets/grid.png';
+
 import fiveByFiveImg from './assets/5x5.png';
+import oneByOneImg from './assets/1x1.png';
 
 const gameState = {}
 
@@ -15,6 +17,7 @@ class Basic extends Phaser.Scene
     {
         this.load.image('bg', bgImg);
         this.load.image('5x5', fiveByFiveImg);
+        this.load.image('1x1', oneByOneImg);
     }
       
     create ()
@@ -27,6 +30,12 @@ class Basic extends Phaser.Scene
 
         this.input.setDraggable(gameState.r1);
 
+        gameState.r2 = this.add.image(150,150, '1x1')
+
+        gameState.r2.setInteractive();
+
+        this.input.setDraggable(gameState.r2);
+
         this.input.on('drag', function(pointer, gameObj, dragX, dragY) {
             let gridSize = 25;
 
@@ -37,6 +46,19 @@ class Basic extends Phaser.Scene
                 gameObj.y = Phaser.Math.Snap.To(dragY, gridSize);
             }
         })
+
+        this.physics.systems.start()
+
+        this.physics.add.existing(gameState.r1)
+        this.physics.add.existing(gameState.r2)
+
+        this.physics.add.collider(gameState.r1, gameState.r2)
+
+        this.physics.add.overlap(gameState.r1, gameState.r2, function() {
+            // Move tile2 away from tile1
+            gameState.r2.x += 10;
+            gameState.r2.y += 10;
+        });
 
     }
 }
