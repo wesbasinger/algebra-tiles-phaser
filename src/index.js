@@ -1,8 +1,4 @@
 import Phaser from 'phaser';
-import bgImg from './assets/grid.png';
-
-import fiveByFiveImg from './assets/5x5.png';
-import oneByOneImg from './assets/1x1.png';
 
 const gameState = {}
 
@@ -12,55 +8,53 @@ class Basic extends Phaser.Scene
     {
         super();
     }
-
-    preload ()
-    {
-        this.load.image('bg', bgImg);
-        this.load.image('5x5', fiveByFiveImg);
-        this.load.image('1x1', oneByOneImg);
-    }
       
     create ()
     {
-        this.add.image(412.5, 312.5, 'bg');
 
-        gameState.r1 = this.add.image(400,200, '5x5')
+        let rectangle1 = this.add.rectangle(100, 100, 50, 50, 0xff0000).setInteractive();
+        let rectangle2 = this.add.rectangle(200, 200, 50, 50, 0x00ff00).setInteractive();
 
-        gameState.r1.setInteractive();
+        let staticRectangle = rectangle1; // set rectangle1 as the static rectangle
 
-        this.input.setDraggable(gameState.r1);
+        this.input.setDraggable([rectangle2]);
 
-        gameState.r2 = this.add.image(150,150, '1x1')
+        this.input.on('drag', function (pointer, gameObject, dragX, dragY) {
+            if (gameObject !== staticRectangle) { // check if the dragged rectangle is not the static rectangle
+                gameObject.x = dragX;
+                gameObject.y = dragY;
 
-        gameState.r2.setInteractive();
-
-        this.input.setDraggable(gameState.r2);
-
-        this.input.on('drag', function(pointer, gameObj, dragX, dragY) {
-            let gridSize = 25;
-
-            if(dragX > 75 && dragX < 725) {
-                gameObj.x = Phaser.Math.Snap.To(dragX, gridSize);
+                // check for collision between the dragged rectangle and the static rectangle
+                if (Phaser.Geom.Intersects.RectangleToRectangle(gameObject.getBounds(), staticRectangle.getBounds())) {
+                    
+                    // calculate the distance between the two rectangles
+                    let distanceX = Math.abs(gameObject.x - staticRectangle.x);
+                    let distanceY = Math.abs(gameObject.y - staticRectangle.y);
+                    
+                    // move the dragged rectangle apart from the static rectangle along the shortest distance
+                    if (distanceX > distanceY) {
+                        if (gameObject.x > staticRectangle.x) {
+                            gameObject.x += distanceX/2;
+                        } else {
+                            gameObject.x -= distanceX/2;
+                        }
+                    } else {
+                        if (gameObject.y > staticRectangle.y) {
+                            gameObject.y += distanceY/2;
+                        } else {
+                            gameObject.y -= distanceY/2;
+                        }
+                    }
+                }
+            } else { // if the dragged rectangle is the static rectangle, reset its position to its original position
+                gameObject.x = gameObject.input.dragStartX;
+                gameObject.y = gameObject.input.dragStartY;
             }
-            if (dragY > 75 && dragY < 525) {
-                gameObj.y = Phaser.Math.Snap.To(dragY, gridSize);
-            }
-        })
+});
 
-        this.physics.systems.start()
-
-        this.physics.add.existing(gameState.r1)
-        this.physics.add.existing(gameState.r2)
-
-        this.physics.add.collider(gameState.r1, gameState.r2)
-
-        this.physics.add.overlap(gameState.r1, gameState.r2, function() {
-            // Move tile2 away from tile1
-            gameState.r2.x += 10;
-            gameState.r2.y += 10;
-        });
 
     }
+
 }
 
 const config = {
